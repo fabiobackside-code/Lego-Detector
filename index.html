@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGO Detector TFS &mdash; IA Fundamentos</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --border: #0f3460;
+            --accent: #FFD700;
+            --accent-dim: #b39800;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --green: #4caf50;
+            --red: #f44336;
+            --blue: #2196f3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 2px solid var(--accent);
+            padding: 16px 24px;
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+        }
+
+        header h1 { color: var(--accent); font-size: 1.4rem; letter-spacing: 1px; }
+        header p  { color: var(--text-muted); font-size: 0.8rem; }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 0;
+            height: calc(100vh - 57px);
+        }
+
+        /* ---------- COLUNA ESQUERDA: upload + inventario ---------- */
+
+        #panel-left {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Zona de upload --- */
+
+        #drop-area {
+            border: 2px dashed var(--border);
+            margin: 16px;
+            border-radius: 8px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        #drop-area:hover,
+        #drop-area.drag-over {
+            border-color: var(--accent);
+            background: rgba(255, 215, 0, 0.04);
+        }
+
+        #drop-area .icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+        #drop-area p {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            line-height: 1.6;
+        }
+
+        #drop-area label {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 18px;
+            background: var(--accent);
+            color: #111;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        #drop-area label:hover { background: var(--accent-dim); }
+        #file-input { display: none; }
+
+        #file-info {
+            margin: 0 16px 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            min-height: 18px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- Progresso de video --- */
+
+        #video-progress-wrapper { margin: 0 16px 12px; display: none; }
+
+        #video-progress-wrapper label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        #video-progress {
+            width: 100%;
+            height: 6px;
+            appearance: none;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #video-progress::-webkit-progress-bar   { background: var(--border); }
+        #video-progress::-webkit-progress-value { background: var(--accent); transition: width 0.3s; }
+
+        /* --- Status --- */
+
+        #status-bar {
+            margin: 0 16px 12px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background: var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #status-bar.loading { color: var(--blue); }
+        #status-bar.ready   { color: var(--green); }
+        #status-bar.done    { color: var(--accent); }
+        #status-bar.warning { color: var(--red); }
+
+        #status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+
+        #status-bar.loading #status-dot { animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        /* --- Inventario --- */
+
+        #inventory-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+        }
+
+        #inventory-section h2 {
+            font-size: 0.75rem;
+            color: var(--accent);
+            letter-spacing: 1px;
+            padding: 12px 16px 8px;
+            text-transform: uppercase;
+        }
+
+        #inventory-placeholder {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 12px 16px;
+            font-style: italic;
+        }
+
+        #inventory-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+        }
+
+        #inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        #inventory-table thead th {
+            text-align: left;
+            color: var(--text-muted);
+            padding: 4px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #inventory-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+        #inventory-table td {
+            padding: 6px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            vertical-align: middle;
+        }
+
+        .bar-cell { width: 80px; }
+
+        .confidence-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .count-badge {
+            display: inline-block;
+            background: var(--border);
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        #inventory-summary {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        /* ---------- COLUNA DIREITA: canvas ---------- */
+
+        #panel-right {
+            grid-column: 2;
+            grid-row: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas-wrapper {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #preview-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: calc(100vh - 100px);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: #111;
+        }
+
+        #canvas-placeholder {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 2;
+        }
+
+        #canvas-placeholder span { display: block; font-size: 3rem; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>&#x1F9F1; LEGO Detector TFS</h1>
+    <p>IA Fundamentos &mdash; Deteccao de objetos com YOLOv8 + TensorFlow.js + Web Worker</p>
+</header>
+
+<main>
+
+    <div id="panel-left">
+
+        <!-- Zona de upload (imagem ou video) -->
+        <div id="drop-area">
+            <span class="icon">&#x1F4C2;</span>
+            <p>Arraste uma imagem ou video<br>de pecas LEGO aqui</p>
+            <label for="file-input">Selecionar arquivo</label>
+            <input type="file" id="file-input"
+                   accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime">
+        </div>
+
+        <!-- Nome e tamanho do arquivo selecionado -->
+        <p id="file-info"></p>
+
+        <!-- Barra de progresso para processamento de video -->
+        <div id="video-progress-wrapper">
+            <label id="video-progress-label">Extraindo frames...</label>
+            <progress id="video-progress" value="0" max="100"></progress>
+        </div>
+
+        <!-- Status do modelo e da inferencia -->
+        <div id="status-bar">
+            <div id="status-dot"></div>
+            <span id="status-text">Carregando modelo YOLO...</span>
+        </div>
+
+        <!-- Inventario de pecas detectadas -->
+        <section id="inventory-section">
+            <h2>Inventario de Pecas</h2>
+            <div id="inventory-scroll">
+                <p id="inventory-placeholder">Nenhuma peca detectada ainda.</p>
+                <table id="inventory-table" style="display:none">
+                    <thead>
+                        <tr>
+                            <th>Peca</th>
+                            <th>Qtd</th>
+                            <th class="bar-cell">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-body"></tbody>
+                </table>
+            </div>
+            <p id="inventory-summary"></p>
+        </section>
+
+    </div>
+
+    <!-- Area do canvas onde a imagem e as bounding boxes sao renderizadas -->
+    <div id="panel-right">
+        <div id="canvas-wrapper">
+            <canvas id="preview-canvas" width="640" height="480"></canvas>
+            <div id="canvas-placeholder">
+                <span>&#x1F9F1;</span>
+                Envie uma imagem ou video<br>para comecar a deteccao
+            </div>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

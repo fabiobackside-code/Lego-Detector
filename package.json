@@ -1,0 +1,19 @@
+{
+  "name": "lego-detector-tfs",
+  "version": "1.0.0",
+  "description": "Desafio IA Fundamentos — LEGO Detector com TensorFlow.js (YOLOv8 + Web Worker)",
+  "scripts": {
+    "start": "webpack serve --open",
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^13.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "webpack": "^5.100.0",
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0"
+  }
+}
