@@ -222,6 +222,8 @@ LEGO Detector TFS Original/
 │   ├── group1-shard3of3.bin       → pesos (shard 3/3)
 │   └── labels.json                → ["brick"]
 ├── docs/
+│   ├── desafio-tecnico-ia-fundamentos.md  → enunciado original
+│   └── comparativo-tfjs-vs-ort.md         → mapeamento TF.js vs onnxruntime-web
 ├── package.json
 ├── webpack.config.js              → bundle + CopyPlugin para lego_web_model/
 └── README.md                      → este arquivo
